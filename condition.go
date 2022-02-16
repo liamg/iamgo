@@ -1,52 +1,71 @@
 package iamgo
 
 import (
-	"encoding/json"
+    "encoding/json"
+
+    "github.com/liamg/jfather"
 )
 
-type Conditions []Condition
+type Conditions struct {
+    inner []Condition
+    r     Range
+}
 
 type Condition struct {
-	Operator string
-	Key      string
-	Value    StringSet
+    operator String
+    key      String
+    value    Strings
 }
 
-func (c *Conditions) UnmarshalJSON(b []byte) error {
-
-	var mapped map[string]map[string]StringSet
-	if err := json.Unmarshal(b, &mapped); err != nil {
-		return err
-	}
-
-	var output []Condition
-	for operator, comparison := range mapped {
-		for key, value := range comparison {
-			output = append(output, Condition{
-				Operator: operator,
-				Key:      key,
-				Value:    value,
-			})
-		}
-	}
-
-	*c = output
-	return nil
+func (c *Conditions) UnmarshalJSONWithMetadata(node jfather.Node) error {
+    var data map[string]map[string]Strings
+    if err := node.Decode(&data); err != nil {
+        return err
+    }
+    c.r = Range{
+        StartLine: node.Range().Start.Line,
+        EndLine:   node.Range().End.Line,
+    }
+    for operator, comparison := range data {
+        for key, value := range comparison {
+            value.r = c.r
+            c.inner = append(c.inner, Condition{
+                operator: String{
+                    inner: operator,
+                    r:     c.r,
+                },
+                key: String{
+                    inner: key,
+                    r:     c.r,
+                },
+                value: value,
+            })
+        }
+    }
+    return nil
 }
 
-func (c *Conditions) MarshalJSON() ([]byte, error) {
+func (c Conditions) MarshalJSON() ([]byte, error) {
+    data := make(map[string]map[string]Strings)
+    for _, condition := range c.inner {
+        existing, ok := data[condition.operator.inner]
+        if !ok {
+            existing = make(map[string]Strings)
+        }
+        existing[condition.key.inner] = condition.value
+        data[condition.operator.inner] = existing
+    }
+    return json.Marshal(data)
+}
 
-	mapped := make(map[string]map[string]interface{})
-	for _, condition := range *c {
+func (c *Condition) Operator() (string, Range) {
+    return c.operator.inner, c.operator.r
+}
 
-		set, ok := mapped[condition.Operator]
-		if !ok {
-			set = make(map[string]interface{})
-		}
+func (c *Condition) Key() (string, Range) {
+    return c.key.inner, c.key.r
+}
 
-		set[condition.Key] = condition.Value
-		mapped[condition.Operator] = set
-	}
-
-	return json.Marshal(mapped)
+func (c *Condition) Value() ([]string, Range) {
+    return c.value.inner, c.value.r
 }
