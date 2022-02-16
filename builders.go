@@ -8,6 +8,12 @@ func NewPolicyBuilder() *PolicyBuilder {
 	return &PolicyBuilder{}
 }
 
+func PolicyBuilderFromDocument(doc Document) *PolicyBuilder {
+	return &PolicyBuilder{
+		doc: doc,
+	}
+}
+
 func (p *PolicyBuilder) Build() Document {
 	return p.doc
 }
@@ -35,6 +41,20 @@ func (p *PolicyBuilder) WithId(id string, lines ...int) *PolicyBuilder {
 }
 
 func (p *PolicyBuilder) WithStatement(s Statement, lines ...int) *PolicyBuilder {
+
+	for i, existing := range p.doc.inner.Statement.inner {
+		if existing.inner.Sid == s.inner.Sid {
+			p.doc.inner.Statement.inner[i] = s
+			if len(lines) > 0 {
+				p.doc.inner.Statement.r.StartLine = lines[0]
+			}
+			if len(lines) > 1 {
+				p.doc.inner.Statement.r.EndLine = lines[1]
+			}
+			return p
+		}
+	}
+
 	p.doc.inner.Statement.inner = append(p.doc.inner.Statement.inner, s)
 	if len(lines) > 0 {
 		p.doc.inner.Statement.r.StartLine = lines[0]
