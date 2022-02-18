@@ -3,7 +3,7 @@ module github.com/liamg/iamgo
 go 1.17
 
 require (
-	github.com/liamg/jfather v0.0.6
+	github.com/liamg/jfather v0.0.7
 	github.com/stretchr/testify v1.7.0
 )
 
