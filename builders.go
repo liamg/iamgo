@@ -43,7 +43,7 @@ func (p *PolicyBuilder) WithId(id string, lines ...int) *PolicyBuilder {
 func (p *PolicyBuilder) WithStatement(s Statement, lines ...int) *PolicyBuilder {
 
 	for i, existing := range p.doc.inner.Statement.inner {
-		if existing.inner.Sid == s.inner.Sid {
+		if existing.inner.Sid == s.inner.Sid && existing.inner.Sid.inner != "" {
 			p.doc.inner.Statement.inner[i] = s
 			if len(lines) > 0 {
 				p.doc.inner.Statement.r.StartLine = lines[0]
