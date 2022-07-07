@@ -43,9 +43,9 @@ func (d Strings) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.inner)
 }
 
-func (v *innerStrings) UnmarshalJSON(b []byte) error {
+func (v *innerStrings) UnmarshalJSONWithMetadata(node jfather.Node) error {
 	var raw interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := node.Decode(&raw); err != nil {
 		return err
 	}
 	switch actual := raw.(type) {
@@ -59,6 +59,8 @@ func (v *innerStrings) UnmarshalJSON(b []byte) error {
 		*v = output
 	case string:
 		*v = []string{actual}
+	case bool:
+		*v = []string{fmt.Sprintf("%t", actual)}
 	default:
 		return fmt.Errorf("cannot use %T type for multi-value JSON field", actual)
 	}
